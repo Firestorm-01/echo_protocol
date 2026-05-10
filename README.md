@@ -1,5 +1,5 @@
 # Echo Protocol — Dead Man's Switch System
-
+⚠️Entire project needs to be tested before usage.This is a version 1.
 A comprehensive, self-hosted dead man's switch with **10 independent trigger mechanisms** and **M-of-N consensus logic** to prevent false positives.
 
 ## How It Works
