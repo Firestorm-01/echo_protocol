@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <style>
+    body { width: 240px; padding: 14px; font-family: -apple-system, sans-serif; }
+    h3   { margin: 0 0 10px 0; font-size: 1rem; }
+    .status {
+      padding: 8px 10px;
+      border-radius: 6px;
+      margin: 10px 0;
+      font-size: 0.85rem;
+    }
+    .ok      { background: #d4edda; color: #155724; }
+    .warning { background: #fff3cd; color: #856404; }
+    button {
+      width: 100%;
+      padding: 8px;
+      background: #007bff;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+    button:hover { background: #0056b3; }
+  </style>
+</head>
+<body>
+  <h3>&#128276; Echo Protocol</h3>
+  <div class="status ok" id="status">Activity monitoring active</div>
+  <button onclick="manualPing()">Manual Check-In</button>
+  <script>
+    function manualPing() {
+      chrome.runtime.sendMessage({ type: 'activity', minutes: 1 });
+      document.getElementById('status').textContent = 'Check-in sent!';
+      setTimeout(() => {
+        document.getElementById('status').textContent = 'Activity monitoring active';
+      }, 2000);
+    }
+  </script>
+</body>
+</html>

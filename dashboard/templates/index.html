@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Echo Protocol Dashboard</title>
+  <style>
+    :root {
+      --bg-primary:   #0a0a0f;
+      --bg-secondary: #12121a;
+      --bg-card:      #1a1a24;
+      --text-primary: #e0e0e0;
+      --text-secondary: #888;
+      --accent:  #00d4aa;
+      --warning: #ffaa00;
+      --danger:  #ff4444;
+      --success: #00cc66;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+    }
+    .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid #333;
+    }
+    h1 { font-size: 1.8rem; font-weight: 600; }
+    .status-badge {
+      padding: 0.5rem 1rem;
+      border-radius: 9999px;
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 0.75rem;
+      letter-spacing: 0.05em;
+    }
+    .status-ok       { background: var(--success); color: #000; }
+    .status-warning  { background: var(--warning);  color: #000; }
+    .status-critical { background: var(--danger);   color: #fff; }
+    .status-fired    { background: #f00; color: #fff; animation: pulse 1s infinite; }
+    @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:.7; } }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    .card {
+      background: var(--bg-card);
+      border-radius: 12px;
+      padding: 1.5rem;
+      border: 1px solid #2a2a35;
+    }
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+    .card-title { font-size: 1rem; font-weight: 600; color: var(--text-secondary); }
+    .stat { font-size: 2.5rem; font-weight: 700; }
+    .stat-label { font-size: .85rem; color: var(--text-secondary); margin-top: .25rem; }
+    .trigger-list { list-style: none; }
+    .trigger-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem;
+      background: var(--bg-secondary);
+      border-radius: 8px;
+      margin-bottom: .75rem;
+    }
+    .trigger-info { flex: 1; }
+    .trigger-name { font-weight: 600; margin-bottom: .25rem; }
+    .trigger-meta { font-size: .8rem; color: var(--text-secondary); }
+    .trigger-dot {
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      margin-left: 1rem;
+      flex-shrink: 0;
+    }
+    .dot-ok      { background: var(--success); }
+    .dot-warning { background: var(--warning); }
+    .dot-failed  { background: var(--danger); }
+    .btn {
+      background: var(--accent);
+      color: #000;
+      border: none;
+      padding: .75rem 1.5rem;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity .2s;
+    }
+    .btn:hover { opacity: .85; }
+    .btn-danger { background: var(--danger); color: #fff; }
+    .actions { display: flex; gap: 1rem; margin-top: 2rem; flex-wrap: wrap; }
+    .progress-ring { width: 120px; height: 120px; margin: 0 auto; }
+    .consensus-display { text-align: center; }
+    .consensus-text { margin-top: 1rem; font-size: 1.1rem; }
+    .consensus-detail { font-size: .85rem; color: var(--text-secondary); }
+    .last-update { font-size: .75rem; color: var(--text-secondary); text-align: center; margin-top: 2rem; }
+    .alert-banner {
+      background: var(--danger);
+      color: #fff;
+      padding: 1rem 1.5rem;
+      border-radius: 8px;
+      margin-bottom: 1.5rem;
+      font-weight: 600;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>&#128276; Echo Protocol</h1>
+      <div id="system-status" class="status-badge status-ok">LOADING&hellip;</div>
+    </header>
+
+    <div id="fired-banner" class="alert-banner">
+      &#9888;&#65039; SWITCH HAS FIRED &mdash; Contacts have been notified.
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <div class="card-header"><span class="card-title">Consensus Status</span></div>
+        <div class="consensus-display">
+          <svg class="progress-ring" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="60" cy="60" r="50" fill="none" stroke="#2a2a35" stroke-width="10"/>
+            <circle id="progress-circle" cx="60" cy="60" r="50" fill="none"
+                    stroke="var(--success)" stroke-width="10"
+                    stroke-dasharray="314" stroke-dashoffset="0"
+                    transform="rotate(-90 60 60)" stroke-linecap="round"/>
+            <text x="60" y="65" text-anchor="middle" fill="var(--text-primary)"
+                  font-size="22" font-weight="bold" id="progress-text">0/0</text>
+          </svg>
+          <div class="consensus-text">Triggers OK</div>
+          <div class="consensus-detail">
+            Threshold: <span id="threshold-m">3</span> failures to fire
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><span class="card-title">Active Triggers</span></div>
+        <div class="stat" id="active-count">0</div>
+        <div class="stat-label">Monitoring systems active</div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><span class="card-title">Warnings</span></div>
+        <div class="stat" id="warning-count" style="color:var(--warning)">0</div>
+        <div class="stat-label">Triggers approaching threshold</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Trigger Status</span>
+        <button class="btn" onclick="refreshAll()">Refresh</button>
+      </div>
+      <ul class="trigger-list" id="trigger-list">
+        <li class="trigger-item">
+          <div class="trigger-info">
+            <div class="trigger-name">Loading&hellip;</div>
+          </div>
+        </li>
+      </ul>
+    </div>
+
+    <div class="actions">
+      <button class="btn" onclick="globalCheckin()">Manual Check-In (All)</button>
+      <button class="btn btn-danger" onclick="resetSystem()">Reset System</button>
+    </div>
+
+    <div class="last-update">Last updated: <span id="last-update">Never</span></div>
+  </div>
+
+  <script>
+    const API = '';   // Same origin — Flask serves this page
+
+    async function fetchJSON(path, opts) {
+      try {
+        const r = await fetch(API + path, opts);
+        return r.ok ? r.json() : null;
+      } catch (e) {
+        console.error('Fetch error:', e);
+        return null;
+      }
+    }
+
+    async function refreshAll() {
+      const [status, triggers] = await Promise.all([
+        fetchJSON('/api/status'),
+        fetchJSON('/api/triggers'),
+      ]);
+      if (status)   updateStatusDisplay(status);
+      if (triggers) updateTriggerList(triggers.triggers);
+      document.getElementById('last-update').textContent = new Date().toLocaleTimeString();
+    }
+
+    function updateStatusDisplay(data) {
+      const badge = document.getElementById('system-status');
+      badge.textContent = data.status.toUpperCase();
+      badge.className = 'status-badge status-' + data.status;
+
+      document.getElementById('fired-banner').style.display =
+        data.switch_fired ? 'block' : 'none';
+
+      document.getElementById('active-count').textContent  = data.total_triggers;
+      document.getElementById('warning-count').textContent = data.warning_triggers;
+      document.getElementById('threshold-m').textContent   = data.threshold_m;
+
+      const ok   = data.ok_triggers;
+      const total = data.total_triggers || 1;
+      const offset = 314 * (1 - ok / total);
+      const circle = document.getElementById('progress-circle');
+      circle.style.strokeDashoffset = offset;
+      circle.style.stroke =
+        data.failed_triggers > 0  ? 'var(--danger)'  :
+        data.warning_triggers > 0 ? 'var(--warning)' : 'var(--success)';
+      document.getElementById('progress-text').textContent = ok + '/' + total;
+    }
+
+    function updateTriggerList(triggers) {
+      const list = document.getElementById('trigger-list');
+      if (!triggers || triggers.length === 0) {
+        list.innerHTML =
+          '<li class="trigger-item"><div class="trigger-info">' +
+          '<div class="trigger-name">No triggers configured</div>' +
+          '<div class="trigger-meta">Add triggers via the API</div>' +
+          '</div></li>';
+        return;
+      }
+
+      list.innerHTML = triggers.map(function(t) {
+        const lastActivity = t.last_activity
+          ? new Date(t.last_activity).toLocaleString()
+          : 'Never';
+        const dotClass = t.status === 'failed' ? 'dot-failed'
+                       : t.status === 'warning' ? 'dot-warning' : 'dot-ok';
+        return (
+          '<li class="trigger-item">' +
+          '<div class="trigger-info">' +
+          '<div class="trigger-name">' + escHtml(t.name) + '</div>' +
+          '<div class="trigger-meta">Type: ' + escHtml(t.type) +
+          ' &nbsp;|&nbsp; Last activity: ' + escHtml(lastActivity) + '</div>' +
+          '</div>' +
+          '<div class="trigger-dot ' + dotClass + '"></div>' +
+          '</li>'
+        );
+      }).join('');
+    }
+
+    function escHtml(s) {
+      return String(s)
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+        .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function globalCheckin() {
+      alert('Manual check-in requires the API key. Use:\n\ncurl -X POST http://localhost:5000/api/triggers/<id>/activity');
+    }
+
+    function resetSystem() {
+      if (!confirm('Reset all trigger states? This clears warnings and failed states.')) return;
+      const key = prompt('Enter your API key:');
+      if (!key) return;
+      fetch('/api/reset', {
+        method: 'POST',
+        headers: { 'X-API-Key': key },
+      }).then(function(r) {
+        if (r.ok) { alert('System reset successfully.'); refreshAll(); }
+        else       alert('Reset failed — check your API key.');
+      });
+    }
+
+    // Boot
+    refreshAll();
+    setInterval(refreshAll, 30000);
+  </script>
+</body>
+</html>
